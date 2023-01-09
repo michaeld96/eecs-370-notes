@@ -164,13 +164,13 @@ First, split the binary number into groups of four. Second, convert those groups
 
 $$
 \boxed{1}\boxed{0}\boxed{1}\boxed{1}\boxed{1}\boxed{0}\boxed{1}\boxed{0}\boxed{1}\boxed{0}
-\\ \text{Group into fours} \\
+\newline \text{Group into fours} \newline
 \boxed{1}\boxed{0} \qquad \boxed{1}\boxed{1}\boxed{1}\boxed{0} \qquad \boxed{1}\boxed{0}\boxed{1}\boxed{0}
-\\ \text{Now add zero to the left most group} \\
+\newline \text{Now add zero to the left most group} \newline
 \boxed{0}\boxed{0}\boxed{1}\boxed{0} \qquad \boxed{1}\boxed{1}\boxed{1}\boxed{0} \qquad \boxed{1}\boxed{0}\boxed{1}\boxed{0}
-\\ \text{Convert groups into decimal} \\ 
+\newline \text{Convert groups into decimal} \newline
 \underbrace{\boxed{0}\boxed{0}\boxed{1}\boxed{0}}_{2} \qquad \underbrace{\boxed{1}\boxed{1}\boxed{1}\boxed{0}}_{14} \qquad \underbrace{\boxed{1}\boxed{0}\boxed{1}\boxed{0}}_{10}
-\\ \text{Convert decimal to hexadecimal} \\ 
+\newline \text{Convert decimal to hexadecimal} \newline
 2 \rightarrow 2, \qquad 14\to E, \qquad 10 \to A
 $$
 
