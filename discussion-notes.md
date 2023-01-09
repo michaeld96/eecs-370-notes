@@ -116,3 +116,83 @@ Formatted strings contain *format specifiers* to insert useful values into outpu
 * %d: decimal number.
 * %x: hexadecimal number (great for P1a debugging)
 
+### Basics of Decimal, Binary, and Hexadecimal
+
+When we are looking at C-code, `0b` tells the compiler that this is a binary number of base 2.
+
+```c
+#include <stdio.h>
+
+int main(void)
+{
+    int num = 0b0011;
+    printf("%d\n", num); // prints 3.
+    return 0;
+}
+```
+
+### Decimal to Hexadecimal
+
+*Hexadecimal (Hex)* is a number system based on the number sixteen.
+
+<img src = "imgs/hex-img-ex.png" align = "center">
+
+An example of a decimal number 94 in hex is `5E` because `E` cooresponds to 15. To get this answer first we divide 94 by the base which is 16 until the quotient is 0.
+
+$$
+\frac{94}{16} = 5 \text{ with a remainder of 14.} \\
+\qquad 
+\frac{5}{16} = 0 \text{ with a remainder of 5.} \\
+\therefore  5 \text{ corresponds with 5, and 14 corresponds to E.}
+$$
+
+This concludes that 94 in hex is `5E`.
+
+The values of Hex for 94 is $16^1 16^0$, and coverting hex back to decimal is we take the remainder and multiply it by its associated value. So to get back `5E` back to 94:
+
+$$
+5E = 5 \cdot16^1 + 14 * 16^0 = \boxed{94.}
+$$
+
+### Binary to Hex
+
+Below this is a simple algorithm to convert a binary number to a hexadecimal number.
+
+First, split the binary number into groups of four. Second, convert those groups of from binary to a decimal number. Third, from these numbers we now convert them to hexadecimal. 
+
+*Note* if we cannot split up the binary number into four chunks, just add zeros the the left most group. Look at the example below:
+
+$$
+\boxed{1}\boxed{0}\boxed{1}\boxed{1}\boxed{1}\boxed{0}\boxed{1}\boxed{0}\boxed{1}\boxed{0}
+\\ \text{Group into fours} \\
+\boxed{1}\boxed{0} \qquad \boxed{1}\boxed{1}\boxed{1}\boxed{0} \qquad \boxed{1}\boxed{0}\boxed{1}\boxed{0}
+\\ \text{Now add zero to the left most group} \\
+\boxed{0}\boxed{0}\boxed{1}\boxed{0} \qquad \boxed{1}\boxed{1}\boxed{1}\boxed{0} \qquad \boxed{1}\boxed{0}\boxed{1}\boxed{0}
+\\ \text{Convert groups into decimal} \\ 
+\underbrace{\boxed{0}\boxed{0}\boxed{1}\boxed{0}}_{2} \qquad \underbrace{\boxed{1}\boxed{1}\boxed{1}\boxed{0}}_{14} \qquad \underbrace{\boxed{1}\boxed{0}\boxed{1}\boxed{0}}_{10}
+\\ \text{Convert decimal to hexadecimal} \\ 
+2 \rightarrow 2, \qquad 14\to E, \qquad 10 \to A
+$$
+
+Therefore, the binary number $\boxed{1}\boxed{0}\boxed{1}\boxed{1}\boxed{1}\boxed{0}\boxed{1}\boxed{0}\boxed{1}\boxed{0}$ converts to `2EA`
+
+### Hexadecimal to Decimal
+
+Let's look at the example of `1EFC` converted to decimal:
+
+First, each position is $16^{\text{placement}}$, and what we mean by placement is what spot it is (remember, we start at zero). For the example `1EFC`, 1 is at spot $3$ which means it would be $16^3$. Second, we multiply this base placement combo by the hex number that is in that spot, in this case $1$.
+
+$$
+1EFC \to 1\cdot16^3 + 14 \cdot 16^2 + 15 \cdot 16^1 + 12 * 16^0 = 4096 + 3584 + 240 + 12 = \boxed{7932.}
+$$
+
+<!-- Show example of C using hex numbers and how to print it -->
+<!-- Addition in Decimal and Binary -->
+<!-- Bit shifts -->
+<!-- Bit & -->
+<!-- Bit | -->
+<!-- Problem 2 -->
+<!-- Problem 3 -->
+
+
+
