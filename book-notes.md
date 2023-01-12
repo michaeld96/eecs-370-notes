@@ -360,3 +360,24 @@ ADD X9, X21, X9 // h + A[30]
 ADDI X9, X9, #1 // h + A[30] + 1
 STUR X9 [X10, #240] // stores h + A[30] + 1 back into A[30]
 ```
+## 2.6 Logical Operations
+
+<img src = "imgs/LEGv8-bit-ops.png" align = "center">
+
+The table above is a list of bit operations. 
+
+To bit shift left or right in LEGv8, there is a shift instructions for it! *Logical shift left* is denoted at `LSL`, and *logical shift right* is denoted as `LSR`
+
+Lets look at simple example of bit shifting in LEGv8:
+
+```asm
+LSL X11, X19, #4 // X11 = X19 << 4 bits
+```
+
+What the code block above is saying is we take register 19 shift it left 4 bits and store the result in register 11.
+
+Shifting is known as the *shamt* field in the R-format. Here is what the code block looks like in R-format:
+
+<img src = "imgs/shift-left-example.png" align = "center">
+
+

@@ -3,7 +3,8 @@
 
 int main(void)
 {
-    int num = 0b0011;
-    printf("%d\n", num); // prints 3.
+    int a = 6;
+    a = a << 22;
+    printf("%d", a);
     return 0;
 }
