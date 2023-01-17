@@ -380,4 +380,129 @@ Shifting is known as the *shamt* field in the R-format. Here is what the code bl
 
 <img src = "imgs/shift-left-example.png" align = "center">
 
+## 2.7 Instructions for Making Decisions
+
+LEGv8 have two conditional statements that are equivalent to `if` and `goto`.
+
+The first instruction
+```asm
+CBZ register, L1
+```
+means go to the statement labeled `L1` if the value in `register` equals zero. `CBZ` means *compare and branch if zero.* 
+
+The second instruction is 
+```asm
+CBNZ register, L1
+```
+it means go to the staatment labeled `L1` if the value in   `register` *does not* equal zero. `CBNZ` stands for *compare and branch if not zero.* These two statements are the conditional branches.
+
+### Example: Compiling if-then-else Conditional Branches.
+
+In this examples `f,g,h,i,j` variables correspond to the five registers `X19-X23`. What is the translation from C to LEGv8 of the following C code?
+
+```c
+if(i == j)
+{
+    f = g + h;
+}
+else
+{
+    f = g - h;
+}
+```
+
+```asm
+// f == X19
+// g == X20
+// h == X21
+// i == X22
+// j == X23
+SUB X9, X22, X23 // Need to see if the difference between i and j is 0
+CBNZ X9, Else // If i != j go to Else 
+ADD X19, X20, X21
+B Exit // go to Exit
+Else:SUB X19, X20, X21 // f = g- h (skipped if i = j)
+Exit:
+```
+
+We see that we do `CBNZ` rather than `CBZ`. We do this because its more efficient to test the opposite condition to branch over.
+
+`B Exit` is called the *unconditional branch*. This instruction says that the processor always follows the branch. `B` will be used for the instruction branch.
+
+## Loops
+
+We will start with an example!
+
+### Example: Compiling a `while` Loop in C
+
+```c
+while(save[i] == k)
+{
+    i += 1;
+}
+```
+
+To translate this into LEGv8, first we will assume `i == X22, j == X23, k == X24` (`==` meaning corresponds). The first step is to load `save[i]` into a temporary register, but before we can load `save[i]` into a temporary register, we need to have its address, before we can add `i` to the base of array `save` to form the address, we must multiply the index `i` by 8 due tto the byte addressing issue. Fortunately, we can shift left by 3. We need to add the label `Loop` to it so that we can branch back to that instruction at the end of the loop:
+
+```asm
+Loop: LSL X10, X22, #3  // Temp regX10 = i * 8
+```
+
+To get the address of `save[i]`, we need to add `X10` and the base of save in `X25`:
+```asm
+ADD X10, X10, X25   // X10 = address of save[i]
+```
+Now we can use that address to load `save[i]` into a temporary register:
+
+```asm
+LDUR X9, [X10, #0] // Temp reg X9 = save[i]
+```
+Next we subtract `k` from `save[i]` and put the difference into `X11` to set up the loop test. If `X11` is not 0, then they are unequal:
+```asm
+SUB X11, X9, X24    // X11 = save[i] - k
+```
+Next step is to perform a loop test exiting if `save[i] != k`
+```asm
+CBNZ X11, Exit
+```
+The following instruction adds 1 to `i`:
+```asm
+ADDI X22, X22, #1   // i = i + 1
+```
+The end of the loop branches back to the `while` test at the top of the loop. We just add the `Exit` label after it and we're done:
+```asm
+B Loop  // go to Loop
+Exit:
+```
+Now we will alk about *condition codes* or *flags*. Condition codes help determine what the logical operator is doing and how it will be handled with lower level systems. The condition codes are named:
+* Negative (N) - the result that set the condition code had a 1 in the most significant bit.
+* zero (Z) - the result that set the condition code was 0.
+* overflow (V) - the result that set the condition code overflowed.
+* carry (C) - the result that set the condition code had a carry out o the most significant bit or a borrow into the most significant bit.
+
+In LEGv8, the condition branch instruction `B.cond. cond.` can be used for any of the signed comparison instructions:
+* `EQ`, equal
+* `NE`, not equal
+* `LT`, less than
+* `LE`, less than or equal
+* `GT`, greater than
+* `GE` greater than or equal
+
+Here is a chart that is for the combination of these condition branches:
+
+<img src = "imgs/conditional-flags-and-branches.png" align = "center">
+
+## Bounds Check Shortcut
+
+### Example:
+
+Use a shortcut to reduce an index-out-of-bounds check: branch to `IndexOutOfBounds` if `X20` $\ge$ `X11` or if `X20` is negative.
+
+To answer this we will start by checking code using unsigned greater than or equal to do both checks:
+
+```asm
+SUBS XZR, X20, X11  // Test if X20 >= length or X2- < 0
+B.HS IndexOutOfBounds   // if bad, goto Error
+```
+
 
