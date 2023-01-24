@@ -1,16 +1,12 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
-int main(void)
+
+int main()
 {
-    int64_t a;
-    int64_t b;
-    int64_t c;
-    a = 50;
-    printf("%llx\n", a);
-    b = a & 15;
-    printf("%llx\n", b);
-    c = b << 2;
-    
-    return 0;
+  int beq = 0b010;
+  int result = beq << 22;
+  printf("%d\n", result);
+  printf("%d\n", result >> 22);
 }

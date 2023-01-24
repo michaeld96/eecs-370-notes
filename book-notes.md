@@ -429,7 +429,7 @@ We see that we do `CBNZ` rather than `CBZ`. We do this because its more efficien
 
 `B Exit` is called the *unconditional branch*. This instruction says that the processor always follows the branch. `B` will be used for the instruction branch.
 
-## Loops
+### Loops
 
 We will start with an example!
 
@@ -492,7 +492,7 @@ Here is a chart that is for the combination of these condition branches:
 
 <img src = "imgs/conditional-flags-and-branches.png" align = "center">
 
-## Bounds Check Shortcut
+### Bounds Check Shortcut
 
 ### Example:
 
@@ -505,4 +505,220 @@ SUBS XZR, X20, X11  // Test if X20 >= length or X2- < 0
 B.HS IndexOutOfBounds   // if bad, goto Error
 ```
 
+## 2.8 Supporting Procedures in Computer Hardware 
+
+A procedure is a function in programming. For LEGv8 we have the following convention for procedure calling allocating its 32 registers:
+* `X0 - X7`: eight parameter registers in which to pass parameters or return values.
+* `LR (X30)`: one return address register to return to the point of origin.
+
+The *branch-and-link instruction* `BL` is written as 
+
+```asm
+BL ProcedureAddress
+```
+
+The link portion of the name means that na address or link is formed that points to the calling site to allow the procedure to return to the proper address. This link is stored in `LR` (register 30), and this is called the *return address*.
+
+The branch register branches to the address store in register `LR` which is what we want. The *caller* is calling the program. The *caller* puts the parameters in `X0-X7` and uses `BL X` to branch to procedure `X` (and this is referenced as the *callee*). The *callee* performs the calculations and places the result in the same parameter register and returns control back to the caller using `BR LR`. When doing this calling the PC (program counter) is saved in `LR` for a return address.
+
+### Using More Registers
+
+We will use the *stack* for spilling registers. A stack needs a pointer to the most recent allocated address in the stack to show where the next procedure should place the register to be spilled or where old register values are found. The *stack pointer* `SP` which is just one of the 32 registers, is adjusted by a one double word for each register that is saved or restored. Stacks frow from higher address to lower addresses. This convection means that you push values onto the stack by subtracting from the stack pointer.
+
+### Example: Lets turn a C Procedure that doesn't call another procedure.
+
+```c
+long long int leaf_example (long long int g, long long int h, long long int i, long long int j)
+{
+    long long int f;
+    f = (g + h) − (i + j);
+    return f;
+}
+```
+
+To turn this into LEGv8 code we must turn the parameters into registers. Let `g, h , i, j` correspond to `X0, X1, X2, X3` and `X19` will be `f`.
+
+The program will start with the label of the procedure:
+
+```asm
+leaf_example:
+SUBI SP, SP, #24         ; Adjust stack to make room for 3 items
+STUR X10, [SP, #16]     ; save register X10 for use afterwards.
+STUR X9,  [SP, #8]      ; Save register X9 for use afterwards.
+STUR X19, [SP, #0]      ; Save register X19 for use afterwards.
+```
+Now these three statements correspond to the body of the procedure (the function).
+
+```asm
+ADD X9, X0, X1          ; register X9 contains g + h
+ADD X10, X2, X3         ; register X10 contains i + j
+SUB X19, X9, X10        ; f = (g+h) - (i+j)
+```
+
+We return the value of `f` by coping it into the parameter register.
+
+```asm
+ADD X0, X19, XZR        ; returns f(X0 = X19 + 0)
+```
+Before returning, we restore the three old values of the registers we saved by "popping" them off the stack:
+
+```asm
+LDUR X19, [SP, #0]      ; restore register X19 for caller.
+LDUR X9, [SP #8]        ; restore X9 for caller.
+LDUR X10, [SP, #16]     ; restore register X10 for caller.
+ADDI SP, SP, #24        ; adjust stack to delete three items.
+```
+
+The procedue ends with a branch register using the return address:
+
+```asm
+BR  LR                  ; branch back to calling routine.
+```
+ LEGv8 uses two groups for the registers:
+* `X9 - X17`: temporary registers that are not preserved by the callee on a procedure call.
+* `X19 - X28`: saved registers that must be preserved on a procedure call (if used, the callee saves and restores them).
+
+Here is the complete example:
+
+```asm
+leaf_example:
+    SUBI SP,SP,#24
+    STUR X10,[SP,#16]
+    STUR X9,[SP,#8]
+    STUR X19,[SP,#0]
+    ADD X9,X0,X1
+    ADD X10,X2,X3
+    SUB X19,X9,X10
+    ADD X0,X19,XZR
+    LDUR X10,[SP,#16]
+    LDUR X9,[SP,#8]
+    LDUR X19,[SP,#0]
+    ADDI SP,SP,#24
+    BR LR
+```
+
+<img src = "imgs/stack-ex-1.png" align = "center">
+
+### Nested Procedures
+
+Procedures that do not call others are called leaf procedures.
+
+### Example Compiling a recursive C procedure, showing nested procedure and linking
+
+```c
+long long int fact (long long int n)
+{
+    if (n < 1) return (1);
+    else return (n * fact(n − 1));
+}
+```
+
+Lets convert this C code to LEGv8.
+
+`n` corresponds to the argument of register `X0`. The compiled program starts with the label of the procedure and then saves two registers on the stack, the return address and `X0`.
+
+```asm
+fact:
+    SUBI SP, SP, #16        ; giving the stack space for two items.
+    STUR LR, [SP, #8]       ; save the return address.
+    STUR X0, [SP #0]        ; save the return argument n.
+```
+
+The first time `fact` is called, `STUR` saves an address in the program that called `fact`. The next two instructions test wheather `n` is ness than 1, going to `L1` if `n >=1 `.
+
+```asm
+    SUBIS   ZXR, X0, #1     ; test for n < 1.
+    B.GE    L1              ; if n >= 1, go to L1.
+```
+
+If `n` is less than 1, `fact` returns 1 into a value register: it adds 1 into 0, and places that sum into `X1`. It them pops the two saved values off the stack ad branches to the saved return address:
+
+```asm
+    ADDI    X1, XZR, #1    ; RETURN 1
+    ADDI    SP, SP, #16    ; POP 2 ITEMS OFF THE STACK
+    BR      LR             ; RETURN TO CALLER.
+```
+
+
+
+Here is the complete example:
+
+```asm
+fact:
+    SUBI SP,SP,#16          ; MAKES SPACE FOR STACK
+    STUR LR,[SP,#8]         ; MAKING SPACE OF THE RETURN VALUE
+    STUR X0,[SP,#0]         ; MAKING SPACE FOR N
+    SUBIS XZR,X0,#1         ; COMPARE N AND 1
+    B.GE L1                 ; IF N >= 1, GO TO L1
+    ADDI X1,XZR,#1          ; ELSE, SET RETURN VALUE TO 1
+    ADDI SP,SP,#16          ; POP STACK (NOT RESTORING VALUES)
+    BR LR                   ; RETURN
+L1: SUBI X0,X0,#1           ; N = N-1
+    BL fact                 ; CALL FUNC(N-1)
+    LDUR X0,[SP,#0]         ; RESTORE CALLER'S N
+    LDUR LR,[SP,#8]         ; RESTORE CALLER'S RETURN ADDRESS
+    ADDI SP,SP,#16          ; POP STACK
+    MUL X1,X0,X1            ; RETURN N * N - 1
+    BR LR                   ; RETURN
+```
+
+### Allocating Space for New Data on the Stack
+
+The final complexity is that the stack is also used to store valriables that are local to the procedure, but do not fit in registers like local arrays or structures. The segement of the stack containing a procedure's saved register and local variables is called a *procdeure frame* or *activation record*.
+
+Some ARMv8 compilers use a *frame pointer* `FP` to point to the first doubleword of the frame procedure. A stack pointer might change during the procedure, and so references to a local variable in memory that might have different offsets depending on where they are in the procedure. 
+
+<img src = "imgs/stack-ex-2.png" align = "center">
+
+### Allocating Space for New Data on the Heap
+
+In the image below we see how dynamic memory is on the heap. With a lanugae like C or C++, when we want dynamic memory we would use the keywords like `malloc()` in C and `new` in C++. 
+
+The `Text` section on the diagram is machine code on a UNIX system for routines in the srouce file. The *static data* section is where static variables are placed. The stack grows downward while the heap grows upwards!
+
+<img src = "imgs/dynamic-memory-ex.png" align = "center">
+
+## 2.12 Translating and Starting a Program
+
+<img src = "imgs/translating.png" align = "center">
+
+### Assembler
+
+When the we write code in LEGv8 some instructions are translated into the machine language equivalent. For example:
+
+```asm
+MOV X9, X10             ; REGISTER X9 GETS REGISTER X10
+ORR X9, XZR, X10        ; REGISTER X9 GETS 0 OR REGISTER X10.
+```
+
+The LEGv8 assembler aso converts `CMP` (compare) into a subtraction instruction that sets the condition codes and has `XZR` as the destination. 
+
+```
+CMP X9, X10             ; COMPARES X9 TO X10 AND SET CONDITION CODES
+SUBS XZR, X9, X19       ; USE X9 - X10 TO SET THE CONDITION CODES.
+```
+
+Note that a symbol table is used to keep track of labels that are in the assembly code. 
+
+The object file for UNIX systems are typically contains six distinct pieces:
+1. The *object file header* describes the sie and position of the other pieces of the object file.
+2. The text segment contains the machine language code.
+3. The *static data segment* contains data allocated for the life of the program.
+4. The *relocation information* identifies instructions and data words that depend on absolute address when the program is loaded into memory.
+5. The *symbol table* contains the remaining labels that are not defined, such as external references.
+6. *Debugger information* contains a concise description of how the modules were compiled so that a debugger can associate machine instructions with C source files and make data structures readable.
+
+### Linker
+
+A *link editor* or *linker*, takes all the independently assembled machine language programs and "Stitches" them together. The reason a linker is useful is that it is much faster to patch code than it is to recompile and reassemble. There are three steps to a linker:
+
+1. Place code and data modules symbolically in memory.
+2. Determine the addresses of data and instruction labels.
+3. Patch both the internal and external references.
+
+The linker uses the relocation information and symbol table in each object module to resolve all undefined bales.
+
+If all external references are resolved, the linker will now determine the memory locations each module will occupy. 
+
+The linker produces an *executable file* that can be run on a computer. Typically this is the same format as the object file, except that it contains no resolved references.
 
