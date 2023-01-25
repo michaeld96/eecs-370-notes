@@ -3,10 +3,12 @@
 #include <stdint.h>
 
 
+
 int main()
 {
-  int beq = 0b010;
-  int result = beq << 22;
-  printf("%d\n", result);
-  printf("%d\n", result >> 22);
+  double a = 0xffffffffffffffff;
+  double b = 0xffffffffffffffff;
+  double result = a + b;
+  printf("%d + %d = %f\n", a, b, result);
+  return 0;
 }

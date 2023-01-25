@@ -720,5 +720,46 @@ The linker uses the relocation information and symbol table in each object modul
 
 If all external references are resolved, the linker will now determine the memory locations each module will occupy. 
 
-The linker produces an *executable file* that can be run on a computer. Typically this is the same format as the object file, except that it contains no resolved references.
+The linker produces an *executable file* that can be run on a computer. Typically this is the same format as the object file, except that it contains no unresolved references.
+
+### Loader
+
+Now that the executable is on disk, the operating system reads it to memory and starts it. The *loader* follows these steps in UNIX systems:
+
+*Note:* A loader is a systems program that places an object program in main memory so that it is ready to execute.
+
+1. Reads the executable file header to determine size of the text and data segments.
+2. Creates as address space large enough for the text and data.
+3. Copies the instructions and data from executable file into memory.
+4. Copies the parameters (if any) to the main program onto the stack.
+5. Initializes the processor registers and sets the stack pointer to the first free location.
+6. Branches to start-up routine and copies the parameters into the argument registers and calls the main routine of the program. When the main routine returns, the start-up routine terminates the program and an `exit` system call.
+
+### Dynamically Linked Libraries
+
+A Dynamically linked library is a library routine that are linked during the programs execution. They are a good alternative to static linked libraries because when there is an update to the library it applies to it. They do require more storage than a static library, because of their dynamic linking, but do not require the whole libraries to be copies.
+
+<img src = "imgs/dll-diagram.png" align = "center">
+
+# Arithmetic for Computers
+
+## Addition and Subtraction
+
+The big questions dealing with overflow is when it occurs. Adding and subtracting 64-bit numbers can results in overflow because the result might need a 64-bit number.
+
+<img src = "imgs/overflow-add-subtract.png" align = "center">
+
+Some languages like Java or C just ignore overflows.
+
+## 3.3 Multiplication
+
+When we see $1000 \times 2000$, $1000$ is called the multiplicand, and $2000$ is called the multiplier; the final result is called the product.
+
+<img src = "imgs/mult-hardware.png" align = "center">
+
+We first assume that the multiplier ($2000$) is a 64-bit register and that 128-bit Product register is initialized to 0. Over 64 steps the 64-bit multiplicand ($1000$) would move 64-bits to the left. Therefore, we need a 126-bit multiplicand register, initialized with the 64-bit multiplicand in the right half and zeros in the left half. This register is then shifted left 1 bit each step to align the multiplicand with the sum being accumulated in the 128-bit register.
+
+In the diagram above, the least significant bit of the multiplier ($2000$ in the example) determines whether the multiplicand is added to the Product register. Step 2 does a left shift to move the intermediate operands to the left. Step 3 is the right shift gives us the next bit of the multiplier to examine the following iteration. These steps are then repeated 64 times to get the product.
+
+<img src = "imgs/mult-algo.png" align = "center">
 
