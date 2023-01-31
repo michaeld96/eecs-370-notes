@@ -763,3 +763,92 @@ In the diagram above, the least significant bit of the multiplier ($2000$ in the
 
 <img src = "imgs/mult-algo.png" align = "center">
 
+## 3.5 Floating Point
+
+A floating-point number is usually a multiple of the size of a word (32-bit). The LEGv8 floating-point number is shown below, where $s$ is the sign (1 meaning negative), exponent is the value of the 8-bit exponent field (including the sign of the exponent), and fraction is the 23-bit number/
+
+The general form for a floating-point number is:
+
+$$(-1)^s \times F \times E$$
+
+$F$ is the fraction, $E$ is the exponent.
+
+<img src = "imgs/floating-point-dia.png" align = "center">
+
+When we take about overflow, this means that the exponent is too large to be represented in the exponent field.
+
+There is also something called underflow, and this is when a values negative exponent is too large to fit in the exponent field.
+
+This lets us talk about single and double precision. Single precision like `float` in C is a floating-point values that is a 32-bit word. While double precision, `double` in C, is 64-bits, also known as a double word.
+
+For double precision the fields are larger! Exponent is 11 bits, fraction is a 52 bits, while the sign still will only take 1 bit.
+
+<img scr = "imgs/double-word-arith.png" align = "center">
+
+### IEEE 754 Floating-Point Standard
+
+The IEEE standard is on every computer since 1980!
+
+To pack more bits into a number, IEEE 754 makes the leading 1 bit of normalized binary numbers implicit. This makes a 24 bit long in precision (implied 1 and a 23-bit fraction), and a 53 bits long in double precision (1 + 52). To be precise, we use the term significant to represent the 24 or 53-bit number that is 1 plus the fraction. Fraction is when the 23 or 52 bit number. Since 0 has no leading 1, it is given the reserved exponent value 0 so that the hardware won't attach a leading 1 to it.
+
+When we see $00\dots00_{two}$ represents 0, the representation of the rest of the numbers uses the form from before with the hidden 1 added:
+
+$$(-1)^s \times (1 + \text{Fraction}) \times 2^E$$
+
+where the bits of the fraction represent a number between 0 and 1 and E specifies the value in the exponent field. If we number the bits of the fraction from left to right s1, s2, s3, ..., then the value is 
+
+$$(-1)^s \times (1 + (s1 \times 2^{-1}) + (s2 \times 2^{-2}) + (s3 \times 2^{-3}) + \dots ) \times 2^{E}$$
+
+<img src = "imgs/floating-point-chart.png" align = "center">
+
+Biased notation will help us with negative exponents. With biased notation, with the bias being the number subtracted form the normal, unsigned representation to determine the real value.
+
+IEEE 754 uses a bias of 127 for single precision, so an exponent of -1 is represented by the bit pattern of the value $-1 + 127_{\text{ten}}$, or $126_{\text{ten}} = 0111 \space 1110_{\text{two}}$, and +1 is represented by 1 + 127, or $128_{\text{ten}} = 1000 \space 0000_{\text{two}}$. The exponent bias for double precision is 1023. Biased exponent means that the value represented by a floating-point number is really
+
+$$(-1)^s \times (1 + \text{Fraction}) \times 2^{\text{Exponent - Bias}} $$
+
+## A.3 Combinational Logic
+
+*Note:* I have skipped A.2 Because it talks about gates, truth tables, and logical equations which have been covered in EECS 203 to some extent (when I took it).
+
+### Decoders
+
+A decoder is a logic block that has a $n$-bit input and $2^n$ outputs, where only one output is asserted for each input combination.
+
+If the value of input is $i$then Out$i$ will be true and all other outputs will be false.
+
+In the image below we have a 3-bit decoder. This decoder is called a *3-to-8 decoder* since there are three inputs and eight ($2^3$) outputs. There is also a logic element called an encoder that performs the inverse function of a decoder, taking $2^n$ inputs and producing an $n$-bit output.
+
+<img src = "imgs/decoder-example-1.png" align = "center">
+
+### Multiplexors
+
+A multiplexor might also be called a *selector*, since its output is one of the inputs that is selected by a control.
+
+Before we dive into more about a selector lets review a definition called the *selector value*. The *selector value* also know as the *control value*, the control signal that is used to select one of the input values of a multiplexor as the output of the multiplexor.
+
+In the image below we will consider the two-input multiplexor. The multiplexor has three inputs, two data values $A$ and $B$, and a selector $S$. The selector value determines which of the inputs becomes the output. We can represent the logic function computed by a two-input multiplexor as:
+
+$$C = (A \cdot S) + (B \cdot S).$$
+
+<img src = "imgs/multiplexor-example.png" align = "center">
+
+Multiplexor can be created with an arbitrary number of data inputs. When there are only two inputs, the selector is a single signal that selects one of the inputs if it's true (if it's 1) and the other if it's false (0). If there are $n$ data inputs, there will need to be $|\log_2(n)|$ selector inputs.
+
+Multiplexor basically consists of three parts:
+
+1. A decoder that generates $n$ signals, each indicating a different input value.
+2. An array of $n$ AND gates each combining one of the inputs with a signal for the decoder.
+3. A single large OR gate that incorporates the outputs of the AND gates.
+
+### Two-Level Logic and PLAs
+
+*Sum of Products* A form of logical representation that employs a logical sum (OR) of products (terms joined using the AND operator). A product of sums is just the opposite.
+
+$$E = (A \cdot B \cdot \bar{C}) + (A \cdot C \cdot \bar{B}) + (B \cdot C \cdot \bar{A})$$
+
+This equation above is the sum of products.
+
+$E$ can be also written as a product of sums:
+
+$$E = \overline{(\bar{A} + \bar{B} + C) \cdot (\bar{A} + \bar{C} + B) \cdot (\bar{B} + \bar{C} + A)}$$

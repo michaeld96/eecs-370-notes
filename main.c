@@ -6,9 +6,9 @@
 
 int main()
 {
-  double a = 0xffffffffffffffff;
-  double b = 0xffffffffffffffff;
-  double result = a + b;
-  printf("%d + %d = %f\n", a, b, result);
+  uint8_t a = 13;
+  a = ~a;
+  printf("%d\n", a);
+
   return 0;
 }
